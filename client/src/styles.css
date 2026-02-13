@@ -1,0 +1,183 @@
+/* ═══════════════════════════════════════════
+   AI Agents Telegram Dashboard — styles
+   ═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:     #06080f;
+  --bg2:    #0d1117;
+  --card:   rgba(13,17,23,.82);
+  --border: rgba(148,163,184,.12);
+  --text:   #e2e8f0;
+  --muted:  #94a3b8;
+  --accent: #818cf8;
+  --radius: 16px;
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  color-scheme:dark;
+}
+
+html{background:var(--bg)}
+body{min-height:100vh;color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* ── floating background orbs ── */
+.orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:.35;pointer-events:none;z-index:0}
+.orb-1{width:600px;height:600px;top:-120px;left:-80px;background:radial-gradient(circle,rgba(99,102,241,.4),transparent 70%)}
+.orb-2{width:500px;height:500px;bottom:0;right:-60px;background:radial-gradient(circle,rgba(163,110,244,.3),transparent 70%)}
+.orb-3{width:400px;height:400px;top:40%;left:50%;background:radial-gradient(circle,rgba(34,197,94,.15),transparent 70%)}
+
+/* ── app shell ── */
+.app{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:32px 48px 64px}
+
+/* ── header ── */
+header{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:28px}
+.header-left{display:flex;align-items:center;gap:16px}
+.logo-icon{font-size:36px}
+h1{font-size:32px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,#e2e8f0 30%,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tagline{color:var(--muted);font-size:13px;margin-top:2px}
+
+.header-right{display:flex;align-items:center;gap:20px}
+.kpi-row{display:flex;gap:6px}
+.kpi{display:flex;flex-direction:column;align-items:center;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.kpi-v{font-size:20px;font-weight:700}
+.kpi-l{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+
+.conn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;font-size:12px;font-weight:600}
+.conn.on{background:rgba(34,197,94,.1);color:#22c55e}
+.conn.off{background:rgba(248,113,113,.1);color:#f87171}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.conn.on .conn-dot{animation:blink 1.6s infinite}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── agent filter strip ── */
+.strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:20px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s}
+.chip:hover{border-color:rgba(148,163,184,.3);color:var(--text)}
+.chip-on{border-color:var(--accent);color:var(--text)!important;background:rgba(99,102,241,.08)}
+.chip-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.6)}
+
+/* ── mobile tabs ── */
+.tabs{display:none;gap:0;margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tabs button{flex:1;padding:12px;font-size:13px;font-weight:600;background:transparent;border:none;color:var(--muted);cursor:pointer;transition:all .2s}
+.tabs button.on{background:rgba(99,102,241,.12);color:var(--accent)}
+
+/* ── main columns ── */
+main{display:grid;grid-template-columns:1.15fr .85fr;gap:20px}
+
+.col-feed,.col-team{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+
+.col-feed{max-height:calc(100vh - 220px)}
+.col-team{max-height:calc(100vh - 220px);overflow-y:auto}
+
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-head h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px}
+
+.pulse{width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;box-shadow:0 0 10px rgba(34,197,94,.6);animation:pulsate 2s infinite}
+@keyframes pulsate{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.6}}
+
+.clear{background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--muted);cursor:pointer}
+.clear:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── feed ── */
+.feed{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+.feed::-webkit-scrollbar{width:5px}
+.feed::-webkit-scrollbar-track{background:transparent}
+.feed::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px}
+
+.bubble{display:flex;gap:12px;padding:14px;border-radius:14px;border:1px solid var(--border);background:rgba(15,23,42,.45);transition:all .35s ease;animation:slideIn .4s ease}
+.bubble-new{border-color:var(--accent);box-shadow:0 0 20px rgba(99,102,241,.12);animation:slideIn .5s ease, glow 2s ease forwards}
+@keyframes slideIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{to{border-color:var(--border);box-shadow:none}}
+
+.bubble-av{width:42px;height:42px;min-width:42px;border-radius:12px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+.bubble-av-img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+
+.bubble-body{flex:1;min-width:0}
+.bubble-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.bubble-head strong{font-size:13px}
+.bubble-role{font-size:11px;color:var(--accent);font-weight:500}
+.bubble-time{font-size:11px;color:var(--muted);margin-left:auto}
+.bubble-body>p{font-size:13px;line-height:1.55;color:#cbd5e1}
+.bubble-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+
+.btag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.btag.update{background:rgba(99,102,241,.12);color:#a5b4fc}
+.btag.coordination{background:rgba(34,197,94,.12);color:#86efac}
+.btag.tg{background:rgba(56,189,248,.1);color:#38bdf8}
+
+.empty{text-align:center;padding:48px 0;color:var(--muted)}
+
+/* ── agent cards ── */
+.cards{display:flex;flex-direction:column;gap:14px}
+
+.card{border:1px solid;border-radius:var(--radius);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-2px)}
+.card-top{display:flex;align-items:center;gap:16px;padding:18px 18px 12px}
+.card-av-wrap{position:relative;flex-shrink:0}
+.card-av{width:52px;height:52px;border-radius:14px;object-fit:cover;border:2px solid rgba(255,255,255,.06);background:var(--bg2)}
+.card-ring{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:#22c55e;border:2.5px solid var(--bg2);box-shadow:0 0 8px rgba(34,197,94,.6)}
+
+.card h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+.card-emoji{font-size:18px}
+.card-role{font-size:12px;font-weight:600;display:block;margin-top:2px}
+.card-show{font-size:11px;color:var(--muted);margin-left:8px}
+
+.card-q{padding:0 18px 14px;font-size:12px;color:var(--muted);line-height:1.55;font-style:italic}
+
+.card-form{padding:0 18px 18px;display:flex;flex-direction:column;gap:10px}
+.card-form label{display:flex;flex-direction:column;gap:4px}
+.card-form label>span{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.card-form input{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:13px;transition:border-color .2s}
+.card-form input:focus{outline:none;border-color:var(--accent)}
+.card-form input::placeholder{color:rgba(148,163,184,.45)}
+
+.card-form button{padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:transform .15s,filter .15s}
+.card-form button:hover{transform:translateY(-1px);filter:brightness(1.15)}
+.card-form button:active{transform:scale(.97)}
+
+/* ── responsive ── */
+
+/* ── telegram config bar ── */
+.tg-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;padding:14px 18px;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);border-radius:14px;flex-wrap:wrap}
+.tg-bar-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tg-bar-label{font-size:13px;font-weight:600;color:#38bdf8}
+.tg-bar-masked{font-size:12px;color:var(--muted);font-family:monospace;background:var(--bg);padding:3px 8px;border-radius:6px}
+.tg-bar-hint{font-size:11px;color:var(--muted)}
+.tg-bar-right{display:flex;align-items:center;gap:8px}
+.tg-bar-input{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 12px;color:var(--text);font-size:12px;width:240px;font-family:monospace}
+.tg-bar-input:focus{outline:none;border-color:#38bdf8}
+.tg-bar-btn{padding:8px 16px;border:none;border-radius:10px;font-size:12px;font-weight:700;background:#38bdf8;color:#0c1120;cursor:pointer;transition:transform .15s,opacity .15s}
+.tg-bar-btn:hover{transform:translateY(-1px)}
+.tg-bar-btn:disabled{opacity:.4;cursor:default;transform:none}
+
+/* ── delivery status badge ── */
+.card-delivery{padding:0 18px 10px;font-size:11px}
+.delivery-on{color:#22c55e;font-weight:600}
+.delivery-off{color:var(--muted)}
+
+/* ── card buttons row ── */
+.card-btns{display:flex;gap:8px}
+.test-btn{padding:10px 16px;border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;background:transparent;color:var(--text);cursor:pointer;transition:border-color .2s}
+.test-btn:hover{border-color:#38bdf8;color:#38bdf8}
+.card-form label em{font-style:normal;color:var(--muted);font-weight:400}
+
+@media(max-width:1024px){
+  .app{padding:20px 20px 48px}
+  main{grid-template-columns:1fr}
+  .col-feed,.col-team{max-height:none}
+  .col-feed{order:1}
+  .col-team{order:2}
+  .tabs{display:flex}
+  .col-feed:not(.show),.col-team:not(.show){display:none}
+  header{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:600px){
+  h1{font-size:24px}
+  .kpi-row{gap:4px}
+  .kpi{padding:8px 12px}
+  .strip{gap:6px}
+}
