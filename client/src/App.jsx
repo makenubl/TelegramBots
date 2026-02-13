@@ -1,15 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { bots as botDefs, generateBotMessage, generateInitialBurst } from './bots';
 
 /* ── helpers ── */
-const wsUrl = () => {
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  // In production, WS runs on the same host:port as the page
-  // In dev, Vite is on 5173 but server is on 3001
-  const isDev = window.location.port === '5173';
-  const host = isDev ? `${window.location.hostname}:3001` : window.location.host;
-  return `${protocol}://${host}`;
-};
-
 const timeAgo = (iso) => {
   const s = Math.floor((Date.now() - new Date(iso)) / 1000);
   if (s < 10) return 'just now';
@@ -32,19 +24,36 @@ const BOT_COLORS = {
   rachel: { bg: 'rgba(95,191,138,.12)',  border: 'rgba(95,191,138,.35)',  text: '#5FBF8A', glow: '0 0 24px rgba(95,191,138,.18)' },
 };
 
+/* ── localStorage helpers ── */
+function loadJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch { return fallback; }
+}
+function saveJSON(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
 /* ── main app ── */
 export default function App() {
-  const [bots, setBots] = useState([]);
-  const [activities, setActivities] = useState([]);
-  const [connected, setConnected] = useState(false);
+  const [activities, setActivities] = useState(() => generateInitialBurst(15));
   const [selectedBot, setSelectedBot] = useState(null);
   const [tab, setTab] = useState('feed');
-  const [tokenMasked, setTokenMasked] = useState('');
+  const [botConfigs, setBotConfigs] = useState(() => loadJSON('botConfigs', {}));
+  const [telegramToken, setTelegramToken] = useState(() => localStorage.getItem('tgToken') || '');
   const [tokenInput, setTokenInput] = useState('');
   const [tokenSaved, setTokenSaved] = useState(false);
-  const wsRef = useRef(null);
   const feedRef = useRef(null);
   const [now, setNow] = useState(Date.now());
+
+  // Build bots with status + config
+  const bots = useMemo(() =>
+    botDefs.map(b => ({
+      ...b,
+      status: 'active',
+      config: botConfigs[b.id] || {}
+    })),
+    [botConfigs]
+  );
 
   // Tick every 10s so timeAgo updates
   useEffect(() => {
@@ -52,73 +61,93 @@ export default function App() {
     return () => clearInterval(t);
   }, []);
 
+  // Client-side activity simulation
   useEffect(() => {
-    let disposed = false;
-    let reconnectTimer = null;
+    let timer;
+    function tick() {
+      const msg = generateBotMessage();
+      setActivities(prev => [msg, ...prev].slice(0, 100));
 
-    function handleMessage(e) {
-      const p = JSON.parse(e.data);
-      if (p.type === 'init') {
-        setBots(p.data.bots || []);
-        setActivities(p.data.activities || []);
-        if (p.data.telegramBotToken) setTokenMasked(p.data.telegramBotToken);
+      // Try to deliver to Telegram if configured
+      deliverToTelegram(msg);
+
+      // Occasionally generate coordination messages
+      if (Math.random() < 0.3) {
+        setTimeout(() => {
+          const coordination = generateBotMessage(true);
+          setActivities(prev => [coordination, ...prev].slice(0, 100));
+          deliverToTelegram(coordination);
+        }, 2000 + Math.random() * 3000);
       }
-      if (p.type === 'new_activity') {
-        setActivities(prev => {
-          // Deduplicate: skip if this id already exists
-          if (prev.some(a => a.id === p.data.id)) return prev;
-          return [p.data, ...prev].slice(0, 100);
-        });
-      }
-      if (p.type === 'config_updated') {
-        setBots(prev => prev.map(b => b.id === p.data.botId ? { ...b, config: p.data.config } : b));
-      }
-      if (p.type === 'token_updated') {
-        setTokenMasked(p.data.masked);
-      }
+
+      // Schedule next — 3-11 seconds
+      timer = setTimeout(tick, 3000 + Math.random() * 8000);
     }
+    timer = setTimeout(tick, 2000);
+    return () => clearTimeout(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    function connect() {
-      if (disposed) return;
-      const ws = new WebSocket(wsUrl());
-      wsRef.current = ws;
-      ws.onopen = () => setConnected(true);
-      ws.onclose = () => {
-        setConnected(false);
-        if (!disposed) reconnectTimer = setTimeout(connect, 3000);
-      };
-      ws.onmessage = handleMessage;
-    }
+  // Deliver a message to Telegram via serverless API
+  const deliverToTelegram = useCallback((activity) => {
+    const token = localStorage.getItem('tgToken');
+    const configs = loadJSON('botConfigs', {});
+    const cfg = configs[activity.botId];
+    if (!token || !cfg?.telegramId) return;
 
-    connect();
-
-    return () => {
-      disposed = true;
-      clearTimeout(reconnectTimer);
-      wsRef.current?.close();
-    };
+    fetch('/api/telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token,
+        chatId: cfg.telegramId,
+        botName: activity.botName,
+        role: activity.role,
+        botId: activity.botId,
+        content: activity.content,
+        category: activity.category
+      })
+    }).catch(() => {}); // fire-and-forget
   }, []);
 
   const updateConfig = useCallback((botId, config) => {
-    const ws = wsRef.current;
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'update_config', botId, config }));
-    }
+    setBotConfigs(prev => {
+      const next = { ...prev, [botId]: { ...prev[botId], ...config } };
+      saveJSON('botConfigs', next);
+      return next;
+    });
   }, []);
 
   const saveToken = useCallback(() => {
-    const ws = wsRef.current;
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'set_token', token: tokenInput }));
-      setTokenSaved(true);
-      setTokenInput('');
-      setTimeout(() => setTokenSaved(false), 2500);
-    }
+    localStorage.setItem('tgToken', tokenInput);
+    setTelegramToken(tokenInput);
+    setTokenInput('');
+    setTokenSaved(true);
+    setTimeout(() => setTokenSaved(false), 2500);
   }, [tokenInput]);
 
   const testBot = useCallback(async (botId) => {
+    const token = localStorage.getItem('tgToken');
+    const configs = loadJSON('botConfigs', {});
+    const cfg = configs[botId];
+    const bot = botDefs.find(b => b.id === botId);
+
+    if (!token) return alert('Set a Telegram Bot Token first');
+    if (!cfg?.telegramId) return alert('Set a Chat ID for this bot first');
+
     try {
-      const res = await fetch(`/api/telegram/test/${botId}`, { method: 'POST' });
+      const res = await fetch('/api/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          chatId: cfg.telegramId,
+          botName: bot.name,
+          role: bot.role,
+          botId: bot.id,
+          content: '',
+          category: 'test'
+        })
+      });
       const data = await res.json();
       if (!res.ok) alert(data.error);
       else alert('✅ Test message sent to Telegram!');
@@ -137,6 +166,8 @@ export default function App() {
     bots.forEach(b => { m[b.id] = b.config?.dpUrl || b.avatar; });
     return m;
   }, [bots]);
+
+  const tokenMasked = telegramToken ? '••••' + telegramToken.slice(-6) : '';
 
   useEffect(() => {
     if (feedRef.current) feedRef.current.scrollTop = 0;
@@ -164,9 +195,9 @@ export default function App() {
             <Kpi value={bots.length} label="Agents" />
             <Kpi value={activities.length} label="Msgs" />
           </div>
-          <span className={`conn ${connected ? 'on' : 'off'}`}>
+          <span className="conn on">
             <span className="conn-dot" />
-            {connected ? 'Live' : 'Offline'}
+            Live
           </span>
         </div>
       </header>
@@ -239,7 +270,7 @@ export default function App() {
         <section className={`col-team ${tab === 'team' ? 'show' : ''}`}>
           <div className="sec-head"><h2>Agent Profiles</h2></div>
           <div className="cards">
-            {bots.map(b => <BotCard key={b.id} bot={b} onSave={updateConfig} onTest={testBot} hasToken={!!tokenMasked} />)}
+            {bots.map(b => <BotCard key={b.id} bot={b} onSave={updateConfig} onTest={testBot} hasToken={!!telegramToken} />)}
           </div>
         </section>
       </main>
