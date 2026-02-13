@@ -5,9 +5,18 @@ const WebSocket = require('ws');
 const cors = require('cors');
 const { generateBotMessage, getBotStatus, bots } = require('./bots');
 
+const path = require('path');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve built frontend in production
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+app.use(express.static(clientDist));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(clientDist, 'index.html'));
+});
 
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });

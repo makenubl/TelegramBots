@@ -3,7 +3,11 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 /* ── helpers ── */
 const wsUrl = () => {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  return `${protocol}://${window.location.hostname}:3001`;
+  // In production, WS runs on the same host:port as the page
+  // In dev, Vite is on 5173 but server is on 3001
+  const isDev = window.location.port === '5173';
+  const host = isDev ? `${window.location.hostname}:3001` : window.location.host;
+  return `${protocol}://${host}`;
 };
 
 const timeAgo = (iso) => {
