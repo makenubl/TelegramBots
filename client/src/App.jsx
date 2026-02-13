@@ -64,6 +64,7 @@ export default function App() {
   // Client-side activity simulation
   useEffect(() => {
     let timer;
+    let coordTimer;
     function tick() {
       const msg = generateBotMessage();
       setActivities(prev => [msg, ...prev].slice(0, 100));
@@ -73,7 +74,7 @@ export default function App() {
 
       // Occasionally generate coordination messages
       if (Math.random() < 0.3) {
-        setTimeout(() => {
+        coordTimer = setTimeout(() => {
           const coordination = generateBotMessage(true);
           setActivities(prev => [coordination, ...prev].slice(0, 100));
           deliverToTelegram(coordination);
@@ -84,7 +85,7 @@ export default function App() {
       timer = setTimeout(tick, 3000 + Math.random() * 8000);
     }
     timer = setTimeout(tick, 2000);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); clearTimeout(coordTimer); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Deliver a message to Telegram via serverless API
